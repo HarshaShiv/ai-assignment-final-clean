@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Healthcare Assistant</title>
+</head>
+
+<body>
+
+<h2>Ask AI</h2>
+
+<input id="question" placeholder="Ask a question"/>
+<button onclick="askAI()">Ask</button>
+
+<p id="answer"></p>
+
+<script>
+async function askAI() {
+
+const question = document.getElementById("question").value;
+
+const res = await fetch("/ask",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({question})
+});
+
+const data = await res.json();
+
+document.getElementById("answer").innerText = data.answer;
+
+}
+</script>
+
+</body>
+</html>
