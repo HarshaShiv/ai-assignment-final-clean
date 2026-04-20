@@ -1,35 +1,38 @@
 export default async function handler(req, res) {
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const body =
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+
     const question = body?.question || "Explain AI in healthcare";
 
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({
-        answer: "API key missing"
+        answer: "API key missing in Vercel"
       });
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "user", content: question }
-        ]
-      })
-    });
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: question }]
+        })
+      }
+    );
 
     const data = await response.json();
 
+    console.log("OpenAI response:", data);
+
     if (!data.choices) {
       return res.status(500).json({
-        answer: "OpenAI error: " + JSON.stringify(data)
+        answer: "OpenAI failed: " + JSON.stringify(data)
       });
     }
 
@@ -40,7 +43,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      answer: "Server error"
+      answer: "Server crashed"
     });
   }
 }

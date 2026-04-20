@@ -4,7 +4,6 @@
 <title>AI Healthcare Assistant</title>
 
 <style>
-
 body {
   font-family: Arial, sans-serif;
   text-align: center;
@@ -60,7 +59,6 @@ button:hover {
   font-size: 12px;
   padding: 8px;
 }
-
 </style>
 </head>
 
@@ -106,20 +104,44 @@ function setQ(q){
 }
 
 async function askAI(){
-
   const question = document.getElementById("question").value;
+
+  if (!question) {
+    document.getElementById("answer").innerText = "Please enter a question";
+    return;
+  }
 
   document.getElementById("answer").innerText = "Thinking...";
 
-  const res = await fetch("/api/ask", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question })
-  });
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
 
-  const data = await res.json();
+    // Handle server errors
+    if (!res.ok) {
+      const text = await res.text();
+      document.getElementById("answer").innerText =
+        "Server error: " + text;
+      return;
+    }
 
-  document.getElementById("answer").innerText = data.answer;
+    const data = await res.json();
+
+    // Handle missing answer
+    if (!data.answer) {
+      document.getElementById("answer").innerText =
+        "No response from AI. Check API.";
+    } else {
+      document.getElementById("answer").innerText = data.answer;
+    }
+
+  } catch (error) {
+    document.getElementById("answer").innerText =
+      "Network error. Please try again.";
+  }
 }
 
 </script>
