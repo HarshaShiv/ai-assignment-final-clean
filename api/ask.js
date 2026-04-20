@@ -1,18 +1,24 @@
 export default async function handler(req, res) {
   try {
-    const body =
-      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     const question = body?.question || "Explain AI in healthcare";
+
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        answer: "API key missing"
+      });
+    }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-3.5-turbo",
         messages: [
           { role: "user", content: question }
         ]
@@ -21,11 +27,9 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    console.log("API RESPONSE:", data); // 👈 IMPORTANT
-
     if (!data.choices) {
       return res.status(500).json({
-        answer: "API failed: " + JSON.stringify(data)
+        answer: "OpenAI error: " + JSON.stringify(data)
       });
     }
 
@@ -33,8 +37,8 @@ export default async function handler(req, res) {
       answer: data.choices[0].message.content
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({
       answer: "Server error"
     });
