@@ -1,38 +1,54 @@
 export default async function handler(req, res) {
   try {
+    if (req.method !== "POST") {
+      return res.status(200).json({ answer: "API is running" });
+    }
+
     const body =
       typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
-    const question = body?.question || "Explain AI in healthcare";
+    const question = body?.question;
 
+    if (!question) {
+      return res.status(400).json({ answer: "No question provided" });
+    }
+
+    // 🔴 Check API key
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({
         answer: "API key missing in Vercel"
       });
     }
 
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [{ role: "user", content: question }]
-        })
-      }
-    );
+    // 🔴 Call OpenAI
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful AI healthcare assistant."
+          },
+          {
+            role: "user",
+            content: question
+          }
+        ]
+      })
+    });
 
     const data = await response.json();
 
-    console.log("OpenAI response:", data);
+    console.log("OPENAI RESPONSE:", data);
 
     if (!data.choices) {
       return res.status(500).json({
-        answer: "OpenAI failed: " + JSON.stringify(data)
+        answer: "OpenAI error: " + JSON.stringify(data)
       });
     }
 
@@ -41,7 +57,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("ERROR:", err);
     return res.status(500).json({
       answer: "Server crashed"
     });
