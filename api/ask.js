@@ -13,14 +13,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ answer: "No question provided" });
     }
 
-    // 🔴 Check API key
     if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({
-        answer: "API key missing in Vercel"
-      });
+      return res.status(500).json({ answer: "API key missing" });
     }
 
-    // 🔴 Call OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -30,21 +26,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          {
-            role: "system",
-            content: "You are a helpful AI healthcare assistant."
-          },
-          {
-            role: "user",
-            content: question
-          }
+          { role: "user", content: question }
         ]
       })
     });
 
     const data = await response.json();
-
-    console.log("OPENAI RESPONSE:", data);
 
     if (!data.choices) {
       return res.status(500).json({
@@ -57,9 +44,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("ERROR:", err);
-    return res.status(500).json({
-      answer: "Server crashed"
-    });
+    console.error(err);
+    return res.status(500).json({ answer: "Server error" });
   }
 }
